@@ -1,0 +1,26 @@
+version: '3'
+services:
+  intergg_bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    container_name: intergg_bot
+    environment:
+      INTER_DB: "inter_db"
+    links:
+      - inter_db
+
+  inter_db:
+    image: mysql:latest
+    restart: always
+    container_name: intergg_bot_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: discord_lol
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+volumes:
+  db_data:
