@@ -25,17 +25,17 @@ To show all accounts added from the server:
 ```
 
 ## Examples
-Accoun added:
+Account added:
 <br>
-<img src="https://github.com/maxencelupion/Inter.gg-BOT/assets/114016583/9f9135d2-4daa-43f6-9d3d-96799a337409" width="50%">
+<img src="https://github.com/maxencelupion/Inter.gg-Bot/assets/114016583/7338f3e2-63d5-42a4-a4ae-39b524a89e0f" width="50%">
 
 Tracking live game:
 <br>
-<img src="https://github.com/maxencelupion/Inter.gg-BOT/assets/114016583/f8f5311e-1fb8-4713-bf15-361db557edf3" width="50%">
+<img src="https://github.com/maxencelupion/Inter.gg-Bot/assets/114016583/feda3c53-99ac-4dce-bcfc-736f3a92bd5c" width="50%">
 
 Game results:
 <br>
-<img src="https://github.com/maxencelupion/Inter.gg-BOT/assets/114016583/2943ca28-7483-4313-80fe-22b604fb8af3" width="50%">
+<img src="https://github.com/maxencelupion/Inter.gg-Bot/assets/114016583/c259e15e-f926-4ed2-8557-3e9c5b6d0994" width="50%">
 
 ## Development
 Inter.gg Bot is still under development and is updated regularly following the additions I make to it.
