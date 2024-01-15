@@ -42,4 +42,4 @@ Inter.gg Bot is still under development and is updated regularly following the a
 Feel free to create issues if you find anything that needs to be fixed. :)
 
 ## Reach me
-You can reach me through Discord !  
+You can reach me through Discord: *xxeeww* !
