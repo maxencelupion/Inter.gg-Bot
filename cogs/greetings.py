@@ -10,6 +10,9 @@ from datetime import datetime
 
 dict_queue_id = {420: "solo", 440: "flex"}
 dict_queue = {"solo": 2, "flex": 0}
+colors = {"blue": 0x50749b, "green": 0x1a994a, "red": 0xab0303, "yellow": 0xc49c2d}
+results_possibilities = ["Demoted", "Promoted", "Lost LPs", "Won LPs"]
+divisions = {"I": 1, "II": 2, "III": 3, "IV": 4}
 champ_dict = {}
 COGS = []
 for file in os.listdir("cogs"):
@@ -26,7 +29,6 @@ class Greetings(commands.Cog):
 		print(f'Connecté en tant que {self.bot.user.name}')
 		self.check_in_game.start()
 		try:
-			init_db()
 			synced = await self.bot.tree.sync()
 			print(f"Synced {len(synced)} commands")
 			for command in synced:
@@ -55,7 +57,7 @@ class Greetings(commands.Cog):
 			"You can also delete these accounts in the same way.\n"
 			"```/delete_account {Riot account name}{Riot account tag}```\n"
 			"_Made by https://github.com/maxencelupion_",
-			colour=0xc49c2d,
+			colour=colors["yellow"],
 			timestamp=datetime.now()
 		)
 		embed.set_author(name="Inter.gg Bot")
@@ -118,13 +120,13 @@ class Greetings(commands.Cog):
 			)
 		else:
 			update_league_points(pseudo, tag_cleaned,
-			                     await get_league_points(pseudo, tag_cleaned, dict_queue["flex"]),
-			                     dict_queue["flex"])
+								await get_league_points(pseudo, tag_cleaned, dict_queue["flex"]),
+								dict_queue["flex"])
 			update_league_points(pseudo, tag_cleaned,
-			                     await get_league_points(pseudo, tag_cleaned, dict_queue["solo"]),
-			                     dict_queue["solo"])
+								await get_league_points(pseudo, tag_cleaned, dict_queue["solo"]),
+								dict_queue["solo"])
 			update_division_tier(pseudo, tag_cleaned,
-			                     await get_division(pseudo, tag_cleaned, dict_queue["flex"]),
+								await get_division(pseudo, tag_cleaned, dict_queue["flex"]),
 								await get_tier(pseudo, tag_cleaned, dict_queue["flex"]),
 								dict_queue["flex"])
 			await interaction.followup.send(
@@ -180,7 +182,7 @@ class Greetings(commands.Cog):
 					embed = discord.Embed(
 						title="Game started",
 						description=f"Player **_{user[0]}#{user[1]}_** is now in game.\n\n",
-						colour=0x50749b,
+						colour=colors["blue"],
 						timestamp=datetime.now()
 					)
 					embed.add_field(
@@ -214,6 +216,7 @@ class Greetings(commands.Cog):
 					participants_list = api_response_json["metadata"]["participants"]
 					game_id = str(api_response_json['metadata']['matchId'])
 					game_id = game_id.replace("EUW1_", "")
+					position = 0
 					for index, participant in enumerate(participants_list):
 						if participant == acc.id:
 							position = index
@@ -222,16 +225,18 @@ class Greetings(commands.Cog):
 					last_lp = get_last_league_points(str(user[0]), str(user[1]), dict_queue[dict_queue_id[queue_id]])[0]
 					actual_lp = await get_league_points(str(user[0]), str(user[1]), dict_queue[dict_queue_id[queue_id]])
 					change = int(last_lp) - int(actual_lp)
+					old_div = get_division(str(user[0]), str(user[1]), dict_queue["flex"])
+					old_rank = get_rank(str(user[0]), str(user[1]), dict_queue[dict_queue_id[queue_id]])
 					update_league_points(str(user[0]), str(user[1]), actual_lp, dict_queue[dict_queue_id[queue_id]])
 					update_division_tier(str(user[0]), str(user[1]),
 					await get_division(str(user[0]), str(user[1]), dict_queue["flex"]),
-						await get_tier(str(user[0]), str(user[1]), dict_queue["flex"]), dict_queue["flex"])
+					await get_tier(str(user[0]), str(user[1]), dict_queue["flex"]), dict_queue["flex"])
 					rank = await get_rank(str(user[0]), str(user[1]), dict_queue[dict_queue_id[queue_id]])
 					if data_participants[position]['win']:
 						embed = discord.Embed(
 							title="Game won",
 							description=f"Player **_{user[0]}#{user[1]}_** just won his game.\n",
-							colour=0x1a994a,
+							colour=colors["green"],
 							timestamp=datetime.now()
 						)
 						if last_lp > 60 and actual_lp < 30:
@@ -250,7 +255,7 @@ class Greetings(commands.Cog):
 						embed = discord.Embed(
 							title="Game lost",
 							description=f"Player **_{user[0]}#{user[1]}_** just lost his game.\n",
-							colour=0xab0303,
+							colour=colors["red"],
 							timestamp=datetime.now()
 						)
 						if last_lp < 60 and actual_lp > 20:
@@ -309,7 +314,7 @@ class Greetings(commands.Cog):
 			embed = discord.Embed(
 				title="Users in your server",
 				description=f"**{len(users)} in your server:**\n",
-				colour=0xab0303,
+				colour=colors["blue"],
 				timestamp=datetime.now()
 			)
 			for user in users:

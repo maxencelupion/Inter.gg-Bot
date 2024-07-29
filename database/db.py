@@ -16,57 +16,6 @@ def connector_db():
 	return my_db
 
 
-def create_db():
-	"""
-	Create the DB if not exists
-	"""
-	my_db = connector_db()
-	my_cursor = my_db.cursor()
-	my_cursor.execute("CREATE DATABASE IF NOT EXISTS discord_lol;")
-	my_db.commit()
-	my_cursor.close()
-	my_db.close()
-
-
-def create_tables():
-	"""
-	Create the tables if not exists
-	"""
-	my_db = connector_db()
-	my_cursor = my_db.cursor()
-	my_cursor.execute("USE discord_lol;")
-	my_cursor.execute("CREATE TABLE IF NOT EXISTS guild_init "
-	                  "(server_id varchar(255) NOT NULL PRIMARY KEY, "
-	                  "channel_id varchar(255) NOT NULL"
-	                  ");")
-	my_cursor.execute("CREATE TABLE IF NOT EXISTS users_lol "
-	                  "(lol_username varchar(255) NOT NULL, "
-	                  "user_tag varchar(255) NOT NULL,"
-	                  "discord_user varchar(255) NOT NULL, "
-	                  "server_id varchar(255) NOT NULL, "
-	                  "in_game BOOLEAN NOT NULL, "
-	                  "division_solo varchar(255) NOT NULL,"
-	                  "tier_solo varchar(255) NOT NULL,"
-	                  "league_points_solo int NOT NULL,"
-	                  "rank_flex varchar(255) NOT NULL,"
-	                  "division_flex varchar(255) NOT NULL,"
-	                  "league_points_flex int NOT NULL,"
-	                  "FOREIGN KEY (server_id) REFERENCES guild_init (server_id)"
-	                  ");")
-	my_db.commit()
-	my_cursor.close()
-	my_db.close()
-
-
-def init_db():
-	"""
-	Init the DB
-	"""
-	create_db()
-	create_tables()
-	return connector_db()
-
-
 def add_server_db(server_id, channel_id):
 	"""
 	Add a server, and it channels to use to the DB
