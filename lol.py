@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import aiohttp
 import requests
+import sys
 
 from load_env import LOL_API_KEY
 
@@ -143,31 +144,7 @@ async def get_league_points(pseudo, tag, queue):
 					return int(api_response_json[i]["leaguePoints"])
 				elif queue == 2 and api_response_json[i]["queueType"] == "RANKED_SOLO_5x5":
 					return int(api_response_json[i]["leaguePoints"])
-			return -1
-
-
-async def get_rank(pseudo, tag, queue):
-	"""
-	Get the rank of the account for a given queue. This function is called when the account is added to the DB or when
-	the account is no longer in game.
-	:param pseudo: pseudo of the account. Must be a str.
-	:param queue: queue of the account. Must be an int.
-	:return str:
-	"""
-	method_league_points = "/lol/league/v4/entries/by-summoner/"
-	acc = Account(pseudo, tag)
-	await acc.get_id()
-	url_league_points = base_url + method_league_points + str(acc.encrypted_id) + api_key
-	async with aiohttp.ClientSession() as session:
-		async with session.get(url_league_points) as response:
-			api_response_text = await response.text()
-			api_response_json = json.loads(api_response_text)
-			for i in range(len(api_response_json)):
-				if queue == 0 and api_response_json[i]["queueType"] == "RANKED_FLEX_SR":
-					return api_response_json[i]["tier"] + " " + api_response_json[i]["rank"]
-				elif queue == 2 and api_response_json[i]["queueType"] == "RANKED_SOLO_5x5":
-					return api_response_json[i]["tier"] + " " + api_response_json[i]["rank"]
-			return "Error getting rank"
+			return 0
 
 
 async def get_division(pseudo, tag, queue):
@@ -189,9 +166,9 @@ async def get_division(pseudo, tag, queue):
 			for i in range(len(api_response_json)):
 				if queue == 0 and api_response_json[i]["queueType"] == "RANKED_FLEX_SR":
 					return api_response_json[i]["tier"]
-				elif queue == 2 and api_response_json[i]["queueType"] == "RANKED_SOLO_5x5":
+				if queue == 2 and api_response_json[i]["queueType"] == "RANKED_SOLO_5x5":
 					return api_response_json[i]["tier"]
-			return "Error getting rank"
+			return "Unranked"
 
 
 async def get_tier(pseudo, tag, queue):
@@ -215,7 +192,7 @@ async def get_tier(pseudo, tag, queue):
 					return api_response_json[i]["rank"]
 				elif queue == 2 and api_response_json[i]["queueType"] == "RANKED_SOLO_5x5":
 					return api_response_json[i]["rank"]
-			return "Error getting rank"
+			return "IV"
 
 async def test_riot_acc(pseudo, tag):
 	"""

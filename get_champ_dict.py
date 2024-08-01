@@ -6,11 +6,13 @@ champion_json = {}
 
 async def get_latest_ddragon():
     versions = requests.get("https://ddragon.leagueoflegends.com/api/versions.json")
+
     latest = versions.json()[0]
 
     ddragon = requests.get(f"https://ddragon.leagueoflegends.com/cdn/{latest}/data/en_US/champion.json")
 
     champions = ddragon.json()["data"]
+
     return champions
 
 
