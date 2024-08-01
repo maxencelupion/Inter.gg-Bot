@@ -1,5 +1,5 @@
 import sys
-
+import time
 from load_env import USER_DB, PASSWORD_DB, HOST_DB, PORT_DB
 import mysql.connector
 
@@ -9,16 +9,19 @@ def connector_db():
 	Return a MySQL connector using env variables
 	:return mysql.connector:
 	"""
-	try:
-		my_db = mysql.connector.connect(
-			host=HOST_DB,
-			user=USER_DB,
-			password=PASSWORD_DB,
-			port=PORT_DB
-		)
-		return my_db
-	except Exception as e:
-		print(e, file=sys.stderr)
+	while True:
+		try:
+			connection = mysql.connector.connect(
+				host="inter_db",
+				user="root",
+				password="root",
+				database="discord_lol"
+			)
+			if connection.is_connected():
+				return connection
+		except Exception as e:
+			print(f"Error: {e}")
+			time.sleep(5)
 
 
 def add_server_db(server_id, channel_id):
@@ -142,7 +145,6 @@ def update_league_points(pseudo, tag, league_points, queue):
 	"""
 	my_db = connector_db()
 	my_cursor = my_db.cursor()
-	print(f"UPDATE pseudo: {pseudo}, tag: {tag}, league_points: {league_points}, queue: {queue}\n", file=sys.stderr)
 	try:
 		my_cursor.execute("USE discord_lol;")
 		if queue == 2:
@@ -167,7 +169,6 @@ def update_league_points(pseudo, tag, league_points, queue):
 def update_division_tier(pseudo, tag, division, tier, queue):
 	my_db = connector_db()
 	my_cursor = my_db.cursor()
-	print(f"UPDATE DIVISION TIER pseudo: {pseudo}, tag: {tag}, division: {division}, tier: {tier}, queue: {queue}\n", file=sys.stderr)
 	try:
 		my_cursor.execute("USE discord_lol;")
 		if queue == 2:
@@ -175,7 +176,6 @@ def update_division_tier(pseudo, tag, division, tier, queue):
 				f"UPDATE users_lol SET division_solo='{division}' WHERE lol_username='{pseudo}' and user_tag='{tag}';")
 			my_cursor.execute(
 				f"UPDATE users_lol SET tier_solo='{tier}' WHERE lol_username='{pseudo}' and user_tag='{tag}';")
-			print(f"Rows affected: {my_cursor.rowcount}\n", file=sys.stderr)
 		elif queue == 0:
 			my_cursor.execute(
 				f"UPDATE users_lol SET division_flex='{division}' WHERE lol_username='{pseudo}' and user_tag='{tag}';")
@@ -189,7 +189,6 @@ def update_division_tier(pseudo, tag, division, tier, queue):
 		my_db.commit()
 		my_cursor.close()
 		my_db.close()
-		print(f"Rows affected: {my_cursor.rowcount}\n", file=sys.stderr)
 		return
 	except Exception as e:
 		my_cursor.close()
