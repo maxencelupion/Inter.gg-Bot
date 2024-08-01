@@ -185,7 +185,6 @@ class Greetings(commands.Cog):
 					api_response_json = json.loads(api_response_text)
 					champion_id = 0
 					if response.status_code == 200 and old_is_in_game == 0:
-						print("User is in game\n", file=sys.stderr)
 						queue_id = api_response_json["gameQueueConfigId"]
 						if queue_id != 420 and queue_id != 440:
 							return
@@ -222,7 +221,6 @@ class Greetings(commands.Cog):
 						await self.bot.get_channel(id_channel).send(embed=embed)
 
 					elif response.status_code != 200 and old_is_in_game == 1:
-						print("User is no longer in game\n", file=sys.stderr)
 						last_game = await get_last_game(acc)
 						last_game_text = last_game.text
 						api_response_json = json.loads(last_game_text)
@@ -239,7 +237,11 @@ class Greetings(commands.Cog):
 								position = index
 
 						participants_info = api_response_json["info"]["participants"]
+
 						champion_id = participants_info[position]["championId"]
+						player_kill = participants_info[position]["kills"]
+						player_death = participants_info[position]["deaths"]
+						player_assist = participants_info[position]["assists"]
 
 						data_participants = api_response_json["info"]["participants"]
 						data = get_champion_by_key(str(data_participants[position]['championId']), champ_dict)
@@ -294,11 +296,6 @@ class Greetings(commands.Cog):
 									inline=False
 								)
 						embed.add_field(
-							name="Game link",
-							value=f"https://www.leagueofgraphs.com/fr/match/euw/{game_id}",
-							inline=True
-						)
-						embed.add_field(
 							name="Champion",
 							value=f"{data['name']}",
 							inline=True
@@ -306,6 +303,16 @@ class Greetings(commands.Cog):
 						embed.add_field(
 							name="Queue",
 							value=f"{dict_queue_id[queue_id].capitalize()}",
+							inline=True
+						)
+						embed.add_field(
+							name="KDA",
+							value=f"{player_kill}/{player_death}/{player_assist}",
+							inline=True
+						)
+						embed.add_field(
+							name="Game link",
+							value=f"https://www.leagueofgraphs.com/fr/match/euw/{game_id}",
 							inline=True
 						)
 						embed.set_author(name="Inter.gg Bot")
@@ -341,15 +348,19 @@ class Greetings(commands.Cog):
 				timestamp=datetime.now()
 			)
 			for user in users:
+				pseudo = user[0]
+				tag = user[1]
+				solo = user[6] + "-" + user[7] + f" with {user[8]} LPs."
+				flex = user[9] + "-" + user[10] + f" with {user[11]} LPs."
 				embed.add_field(
-					name=f"**{user[0]}#{user[1]}**",
-					value=f"Solo: {user[5].upper()} {user[6]} {user[7]} LP - Flex: {user[8].upper()} {user[9]} {user[10]} LP",
+					name=f"**{pseudo}#{tag}**",
+					value=f"Solo: {solo} - Flex: {flex}",
 					inline=False
 				)
 			embed.set_author(name="Inter.gg Bot")
 			embed.set_footer(text="Info Inter.gg Bot")
 			await interaction.followup.send(
-				content=None,
+				content="Here are the accounts of your server:",
 				ephemeral=True
 			)
 			await self.bot.get_channel(id_channel).send(embed=embed)
