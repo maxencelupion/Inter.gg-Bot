@@ -176,7 +176,6 @@ class Greetings(commands.Cog):
 				try:
 					id_channel = get_channel_by_server(user[4])
 					old_is_in_game = int(user[5])
-					print("Old is in game: " + str(old_is_in_game) + "\n", file=sys.stderr)
 					pseudo = str(user[0])
 					tag = str(user[1])
 					acc = Account(pseudo, tag)
