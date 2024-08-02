@@ -177,8 +177,8 @@ class Greetings(commands.Cog):
 					id_channel = get_channel_by_server(user[4])
 					old_is_in_game = int(user[5])
 					print("Old is in game: " + str(old_is_in_game) + "\n", file=sys.stderr)
-					pseudo = user[0]
-					tag = user[1]
+					pseudo = str(user[0])
+					tag = str(user[1])
 					acc = Account(pseudo, tag)
 					await acc.get_id()
 					response = await is_in_game(acc)
@@ -218,7 +218,7 @@ class Greetings(commands.Cog):
 						embed.set_author(name="Inter.gg Bot")
 						embed.set_thumbnail(url=get_champ_icon(str(champion_id), champ_dict))
 						embed.set_footer(text="Info Inter.gg Bot")
-						update_user_in_game(str(pseudo), str(tag), 1)
+						update_user_in_game(pseudo, tag, 1)
 						await self.bot.get_channel(id_channel).send(embed=embed)
 
 					elif response.status_code != 200 and old_is_in_game == 1:
@@ -227,7 +227,7 @@ class Greetings(commands.Cog):
 						api_response_json = json.loads(last_game_text)
 						queue_id = api_response_json["info"]["queueId"]
 						if queue_id != 420 and queue_id != 440:
-							update_user_in_game(str(pseudo), str(tag), 0)
+							update_user_in_game(pseudo, tag, 0)
 							return
 						participants_list = api_response_json["metadata"]["participants"]
 						game_id = str(api_response_json['metadata']['matchId'])
@@ -247,15 +247,16 @@ class Greetings(commands.Cog):
 						data_participants = api_response_json["info"]["participants"]
 						data = get_champion_by_key(str(data_participants[position]['championId']), champ_dict)
 
-						old_lp = get_last_league_points(str(pseudo), str(tag), dict_queue[dict_queue_id[queue_id]])[0]
-						old_division = get_last_division(str(pseudo), str(tag), dict_queue[dict_queue_id[queue_id]])[0]
-						old_tier = get_last_tier(str(pseudo), str(tag), dict_queue[dict_queue_id[queue_id]])[0]
+						old_lp = get_last_league_points(pseudo, tag, dict_queue[dict_queue_id[queue_id]])[0]
+						old_division = get_last_division(pseudo, tag, dict_queue[dict_queue_id[queue_id]])[0]
+						old_tier = get_last_tier(pseudo, tag, dict_queue[dict_queue_id[queue_id]])[0]
 
-						actual_lp = await get_league_points(str(pseudo), str(tag), dict_queue[dict_queue_id[queue_id]])
-						actual_division = await get_division(str(pseudo), str(tag), dict_queue[dict_queue_id[queue_id]])
+						actual_lp = await get_league_points(pseudo, tag, dict_queue[dict_queue_id[queue_id]])
+						actual_division = await get_division(pseudo, tag, dict_queue[dict_queue_id[queue_id]])
 						actual_tier = await get_tier(pseudo, tag, dict_queue[dict_queue_id[queue_id]])
 
-						update_division_tier(str(user[0]), str(user[1]), actual_division, actual_tier, dict_queue[dict_queue_id[queue_id]])
+						update_division_tier(pseudo, tag, actual_division, actual_tier, dict_queue[dict_queue_id[queue_id]])
+						update_league_points(pseudo, tag, actual_lp, dict_queue[dict_queue_id[queue_id]]w)
 						if data_participants[position]['win']:
 							change = actual_lp - old_lp
 							embed = discord.Embed(
