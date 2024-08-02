@@ -255,10 +255,9 @@ class Greetings(commands.Cog):
 						actual_division = await get_division(str(pseudo), str(tag), dict_queue[dict_queue_id[queue_id]])
 						actual_tier = await get_tier(pseudo, tag, dict_queue[dict_queue_id[queue_id]])
 
-						change = abs(int(actual_lp) - int(old_lp))
-
 						update_division_tier(str(user[0]), str(user[1]), actual_division, actual_tier, dict_queue[dict_queue_id[queue_id]])
 						if data_participants[position]['win']:
+							change = actual_lp - old_lp
 							embed = discord.Embed(
 								title="Game won",
 								description=f"Player **_{pseudo}#{tag}_** just won his game.\n",
@@ -278,6 +277,7 @@ class Greetings(commands.Cog):
 									inline=False
 								)
 						else:
+							change = old_lp - actual_lp
 							embed = discord.Embed(
 								title="Game lost",
 								description=f"Player **_{pseudo}#{tag}_** just lost his game.\n",
