@@ -176,6 +176,7 @@ class Greetings(commands.Cog):
 				try:
 					id_channel = get_channel_by_server(user[4])
 					old_is_in_game = int(user[5])
+					print("Old is in game: " + str(old_is_in_game) + "\n", file=sys.stderr)
 					pseudo = user[0]
 					tag = user[1]
 					acc = Account(pseudo, tag)
@@ -377,7 +378,7 @@ class Greetings(commands.Cog):
 		for cog in COGS:
 			try:
 				await self.bot.reload_extension(f"cogs.{cog}")
-				await ctx.followup.send(f"Reloaded {cog}")
+				await ctx.followup.send(f"{cog} reloaded")
 			except Exception as e:
 				await ctx.followup.send(f"Error: {e}")
 
