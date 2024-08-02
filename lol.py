@@ -82,8 +82,8 @@ async def is_in_game(account):
 	:param account: account class referring a LoL account
 	:return response:
 	"""
-	method_spectator = '/lol/spectator/v4/active-games/by-summoner/'
-	url_spectator = base_url + method_spectator + account.encrypted_id + api_key
+	method_spectator = '/lol/spectator/v5/active-games/by-summoner/'
+	url_spectator = base_url + method_spectator + account.id + api_key
 	try:
 		return requests.get(url_spectator)
 	except Exception as e:
@@ -193,6 +193,7 @@ async def get_tier(pseudo, tag, queue):
 				elif queue == 2 and api_response_json[i]["queueType"] == "RANKED_SOLO_5x5":
 					return api_response_json[i]["rank"]
 			return "IV"
+
 
 async def test_riot_acc(pseudo, tag):
 	"""
