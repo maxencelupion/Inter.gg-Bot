@@ -255,7 +255,7 @@ class Greetings(commands.Cog):
 						actual_tier = await get_tier(pseudo, tag, dict_queue[dict_queue_id[queue_id]])
 
 						update_division_tier(pseudo, tag, actual_division, actual_tier, dict_queue[dict_queue_id[queue_id]])
-						update_league_points(pseudo, tag, actual_lp, dict_queue[dict_queue_id[queue_id]]w)
+						update_league_points(pseudo, tag, actual_lp, dict_queue[dict_queue_id[queue_id]])
 						if data_participants[position]['win']:
 							change = actual_lp - old_lp
 							embed = discord.Embed(
