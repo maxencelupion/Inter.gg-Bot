@@ -14,7 +14,7 @@ dict_queue_id = {420: "solo", 440: "flex"}
 dict_queue = {"solo": 2, "flex": 0}
 colors = {"blue": 0x50749b, "green": 0x1a994a, "red": 0xab0303, "yellow": 0xc49c2d}
 tiers = {"I": 4, "II": 3, "III": 2, "IV": 1}
-divisions = {"Unranked": 0, "IRON": 1, "BRONZE": 2, "SILVER": 3, "GOLD": 4, "PLATINUM": 5, "DIAMOND": 6, "MASTER": 7, "GRANDMASTER": 8, "CHALLENGER": 9}
+divisions = {"Unranked": 0, "IRON": 1, "BRONZE": 2, "SILVER": 3, "GOLD": 4, "PLATINUM": 5, "EMERALD": 6, "DIAMOND": 7, "MASTER": 8, "GRANDMASTER": 9, "CHALLENGER": 10}
 champ_dict = {}
 COGS = []
 for file in os.listdir("cogs"):
@@ -161,6 +161,155 @@ class Greetings(commands.Cog):
 			ephemeral=True
 		)
 
+	async def check_in_game_user(self, pseudo, tag, id_channel, old_is_in_game):
+		try:
+			acc = Account(pseudo, tag)
+			await acc.get_id()
+			response = await is_in_game(acc)
+			api_response_text = response.text
+			api_response_json = json.loads(api_response_text)
+			champion_id = 0
+			if response.status_code == 200 and old_is_in_game == 0:
+				queue_id = api_response_json["gameQueueConfigId"]
+				if queue_id != 420 and queue_id != 440:
+					return
+				for participant in api_response_json['participants']:
+					if participant['puuid'] == acc.id:
+						champion_id = participant['championId']
+				data = get_champion_by_key(str(champion_id), champ_dict)
+				user_link = pseudo.replace(" ", "+")
+				embed = discord.Embed(
+					title="Game started",
+					description=f"Player **_{pseudo}#{tag}_** is now in game.\n\n",
+					colour=colors["blue"],
+					timestamp=datetime.now()
+				)
+				embed.add_field(
+					name="Game link",
+					value=f"https://porofessor.gg/fr/live/euw/{user_link}-{tag}",
+					inline=False
+				)
+				embed.add_field(
+					name="Champion",
+					value=f"{data['name']}",
+					inline=True
+				)
+				embed.add_field(
+					name="Queue",
+					value=f"{dict_queue_id[queue_id].capitalize()}",
+					inline=True
+				)
+				embed.set_author(name="Inter.gg Bot")
+				embed.set_thumbnail(url=get_champ_icon(str(champion_id), champ_dict))
+				embed.set_footer(text="Info Inter.gg Bot")
+				update_user_in_game(pseudo, tag, 1)
+				await self.bot.get_channel(id_channel).send(embed=embed)
+
+			elif response.status_code != 200 and old_is_in_game == 1:
+				last_game = await get_last_game(acc)
+				last_game_text = last_game.text
+				api_response_json = json.loads(last_game_text)
+				queue_id = api_response_json["info"]["queueId"]
+				if queue_id != 420 and queue_id != 440:
+					update_user_in_game(pseudo, tag, 0)
+					return
+				participants_list = api_response_json["metadata"]["participants"]
+				game_id = str(api_response_json['metadata']['matchId'])
+				game_id = game_id.replace("EUW1_", "")
+				position = 0
+				for index, participant in enumerate(participants_list):
+					if participant == acc.id:
+						position = index
+
+				participants_info = api_response_json["info"]["participants"]
+
+				champion_id = participants_info[position]["championId"]
+				player_kill = participants_info[position]["kills"]
+				player_death = participants_info[position]["deaths"]
+				player_assist = participants_info[position]["assists"]
+
+				data_participants = api_response_json["info"]["participants"]
+				data = get_champion_by_key(str(data_participants[position]['championId']), champ_dict)
+
+				old_lp = get_last_league_points(pseudo, tag, dict_queue[dict_queue_id[queue_id]])[0]
+				old_division = get_last_division(pseudo, tag, dict_queue[dict_queue_id[queue_id]])[0]
+				old_tier = get_last_tier(pseudo, tag, dict_queue[dict_queue_id[queue_id]])[0]
+
+				actual_lp = await get_league_points(pseudo, tag, dict_queue[dict_queue_id[queue_id]])
+				actual_division = await get_division(pseudo, tag, dict_queue[dict_queue_id[queue_id]])
+				actual_tier = await get_tier(pseudo, tag, dict_queue[dict_queue_id[queue_id]])
+
+				update_division_tier(pseudo, tag, actual_division, actual_tier, dict_queue[dict_queue_id[queue_id]])
+				update_league_points(pseudo, tag, actual_lp, dict_queue[dict_queue_id[queue_id]])
+				if data_participants[position]['win']:
+					change = actual_lp - old_lp
+					embed = discord.Embed(
+						title="Game won",
+						description=f"Player **_{pseudo}#{tag}_** just won his game.\n",
+						colour=colors["green"],
+						timestamp=datetime.now()
+					)
+					if (tiers[actual_tier] > tiers[old_tier] or divisions[actual_division] > divisions[old_division]):
+						embed.add_field(
+							name="Promoted",
+							value=f"**Ranked up {actual_division}-{actual_tier}** with {actual_lp} LPs, GG !",
+							inline=False
+						)
+					else:
+						embed.add_field(
+							name="New rank",
+							value=f"**+{change} LPs** and is now {actual_division}-{actual_tier} with {actual_lp} LPs.",
+							inline=False
+						)
+				else:
+					change = old_lp - actual_lp
+					embed = discord.Embed(
+						title="Game lost",
+						description=f"Player **_{pseudo}#{tag}_** just lost his game.\n",
+						colour=colors["red"],
+						timestamp=datetime.now()
+					)
+					if tiers[actual_tier] < tiers[old_tier] or divisions[actual_division] < divisions[old_division]:
+						embed.add_field(
+							name="Demoted",
+							value=f"**Retrograded {actual_division}-{actual_tier}** with {actual_lp} LPs, sad..",
+							inline=False
+						)
+					else:
+						embed.add_field(
+							name="New rank",
+							value=f"**-{change} LPs** and is now {actual_division}-{actual_tier} with {actual_lp} LPs.",
+							inline=False
+						)
+				embed.add_field(
+					name="Champion",
+					value=f"{data['name']}",
+					inline=True
+				)
+				embed.add_field(
+					name="Queue",
+					value=f"{dict_queue_id[queue_id].capitalize()}",
+					inline=True
+				)
+				embed.add_field(
+					name="KDA",
+					value=f"{player_kill}/{player_death}/{player_assist}",
+					inline=True
+				)
+				embed.add_field(
+					name="Game link",
+					value=f"https://www.leagueofgraphs.com/fr/match/euw/{game_id}",
+					inline=True
+				)
+				embed.set_author(name="Inter.gg Bot")
+				embed.set_footer(text="Info Inter.gg Bot")
+				embed.set_thumbnail(url=get_champ_icon(str(champion_id), champ_dict))
+				update_user_in_game(str(pseudo), str(tag), 0)
+				await self.bot.get_channel(id_channel).send(embed=embed)
+		except Exception as e:
+			print("Exception during task :")
+			print(e)
+
 	@tasks.loop(seconds=60.0)
 	async def check_in_game(self):
 		"""
@@ -168,162 +317,15 @@ class Greetings(commands.Cog):
 		Check if the user is in game and send a message in the channel of the server if he is in game or if he just finished
 		a game. The message contains some information about the game.
 		"""
-		print("Task started\n", file=sys.stderr)
 		global champ_dict
 		users = get_all_user()
 		if users is not None:
 			for user in users:
-				try:
-					id_channel = get_channel_by_server(user[4])
-					old_is_in_game = int(user[5])
-					pseudo = str(user[0])
-					tag = str(user[1])
-					acc = Account(pseudo, tag)
-					await acc.get_id()
-					response = await is_in_game(acc)
-					api_response_text = response.text
-					api_response_json = json.loads(api_response_text)
-					champion_id = 0
-					if response.status_code == 200 and old_is_in_game == 0:
-						queue_id = api_response_json["gameQueueConfigId"]
-						if queue_id != 420 and queue_id != 440:
-							return
-						for participant in api_response_json['participants']:
-							if participant['puuid'] == acc.id:
-								champion_id = participant['championId']
-						data = get_champion_by_key(str(champion_id), champ_dict)
-						user_link = pseudo.replace(" ", "+")
-						embed = discord.Embed(
-							title="Game started",
-							description=f"Player **_{pseudo}#{tag}_** is now in game.\n\n",
-							colour=colors["blue"],
-							timestamp=datetime.now()
-						)
-						embed.add_field(
-							name="Game link",
-							value=f"https://porofessor.gg/fr/live/euw/{user_link}-{tag}",
-							inline=False
-						)
-						embed.add_field(
-							name="Champion",
-							value=f"{data['name']}",
-							inline=True
-						)
-						embed.add_field(
-							name="Queue",
-							value=f"{dict_queue_id[queue_id].capitalize()}",
-							inline=True
-						)
-						embed.set_author(name="Inter.gg Bot")
-						embed.set_thumbnail(url=get_champ_icon(str(champion_id), champ_dict))
-						embed.set_footer(text="Info Inter.gg Bot")
-						update_user_in_game(pseudo, tag, 1)
-						await self.bot.get_channel(id_channel).send(embed=embed)
-
-					elif response.status_code != 200 and old_is_in_game == 1:
-						last_game = await get_last_game(acc)
-						last_game_text = last_game.text
-						api_response_json = json.loads(last_game_text)
-						queue_id = api_response_json["info"]["queueId"]
-						if queue_id != 420 and queue_id != 440:
-							update_user_in_game(pseudo, tag, 0)
-							return
-						participants_list = api_response_json["metadata"]["participants"]
-						game_id = str(api_response_json['metadata']['matchId'])
-						game_id = game_id.replace("EUW1_", "")
-						position = 0
-						for index, participant in enumerate(participants_list):
-							if participant == acc.id:
-								position = index
-
-						participants_info = api_response_json["info"]["participants"]
-
-						champion_id = participants_info[position]["championId"]
-						player_kill = participants_info[position]["kills"]
-						player_death = participants_info[position]["deaths"]
-						player_assist = participants_info[position]["assists"]
-
-						data_participants = api_response_json["info"]["participants"]
-						data = get_champion_by_key(str(data_participants[position]['championId']), champ_dict)
-
-						old_lp = get_last_league_points(pseudo, tag, dict_queue[dict_queue_id[queue_id]])[0]
-						old_division = get_last_division(pseudo, tag, dict_queue[dict_queue_id[queue_id]])[0]
-						old_tier = get_last_tier(pseudo, tag, dict_queue[dict_queue_id[queue_id]])[0]
-
-						actual_lp = await get_league_points(pseudo, tag, dict_queue[dict_queue_id[queue_id]])
-						actual_division = await get_division(pseudo, tag, dict_queue[dict_queue_id[queue_id]])
-						actual_tier = await get_tier(pseudo, tag, dict_queue[dict_queue_id[queue_id]])
-
-						update_division_tier(pseudo, tag, actual_division, actual_tier, dict_queue[dict_queue_id[queue_id]])
-						update_league_points(pseudo, tag, actual_lp, dict_queue[dict_queue_id[queue_id]])
-						if data_participants[position]['win']:
-							change = actual_lp - old_lp
-							embed = discord.Embed(
-								title="Game won",
-								description=f"Player **_{pseudo}#{tag}_** just won his game.\n",
-								colour=colors["green"],
-								timestamp=datetime.now()
-							)
-							if (tiers[actual_tier] > tiers[old_tier] or divisions[actual_division] > divisions[old_division]):
-								embed.add_field(
-									name="Promoted",
-									value=f"**Ranked up {actual_division}-{actual_tier}** with {actual_lp} LPs, GG !",
-									inline=False
-								)
-							else:
-								embed.add_field(
-									name="New rank",
-									value=f"**+{change} LPs** and is now {actual_division}-{actual_tier} with {actual_lp} LPs.",
-									inline=False
-								)
-						else:
-							change = old_lp - actual_lp
-							embed = discord.Embed(
-								title="Game lost",
-								description=f"Player **_{pseudo}#{tag}_** just lost his game.\n",
-								colour=colors["red"],
-								timestamp=datetime.now()
-							)
-							if tiers[actual_tier] < tiers[old_tier] or divisions[actual_division] < divisions[old_division]:
-								embed.add_field(
-									name="Demoted",
-									value=f"**Retrograded {actual_division}-{actual_tier}** with {actual_lp} LPs, sad..",
-									inline=False
-								)
-							else:
-								embed.add_field(
-									name="New rank",
-									value=f"**-{change} LPs** and is now {actual_division}-{actual_tier} with {actual_lp} LPs.",
-									inline=False
-								)
-						embed.add_field(
-							name="Champion",
-							value=f"{data['name']}",
-							inline=True
-						)
-						embed.add_field(
-							name="Queue",
-							value=f"{dict_queue_id[queue_id].capitalize()}",
-							inline=True
-						)
-						embed.add_field(
-							name="KDA",
-							value=f"{player_kill}/{player_death}/{player_assist}",
-							inline=True
-						)
-						embed.add_field(
-							name="Game link",
-							value=f"https://www.leagueofgraphs.com/fr/match/euw/{game_id}",
-							inline=True
-						)
-						embed.set_author(name="Inter.gg Bot")
-						embed.set_footer(text="Info Inter.gg Bot")
-						embed.set_thumbnail(url=get_champ_icon(str(champion_id), champ_dict))
-						update_user_in_game(str(pseudo), str(tag), 0)
-						await self.bot.get_channel(id_channel).send(embed=embed)
-				except Exception as e:
-					print("Exception during task :")
-					print(e)
+				pseudo = str(user[0])
+				tag = str(user[1])
+				id_channel = get_channel_by_server(user[4])
+				old_is_in_game = user[5]
+				await self.check_in_game_user(pseudo, tag, id_channel, old_is_in_game)
 
 	@discord.app_commands.command(name="show_accounts", description="Show all accounts of the server")
 	async def show_accounts(self, interaction: discord.Interaction):
