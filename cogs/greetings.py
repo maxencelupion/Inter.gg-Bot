@@ -29,7 +29,6 @@ class Greetings(commands.Cog):
 	@commands.Cog.listener()
 	async def on_ready(self):
 		print(f'Connecté en tant que {self.bot.user.name}')
-		self.check_in_game.start()
 		try:
 			synced = await self.bot.tree.sync()
 			print(f"Synced {len(synced)} commands")
@@ -39,6 +38,8 @@ class Greetings(commands.Cog):
 			champ_dict = await get_latest_ddragon()
 			while not champ_dict:
 				await asyncio.sleep(1)
+			if not self.check_in_game.is_running():
+				self.check_in_game.start()
 		except Exception as e:
 			print(e)
 
