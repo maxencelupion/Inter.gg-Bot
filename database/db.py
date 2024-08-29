@@ -1,6 +1,6 @@
 import sys
 import time
-from game_tracker.load_env import USER_DB, PASSWORD_DB, HOST_DB, PORT_DB
+from load_env import USER_DB, PASSWORD_DB, HOST_DB, PORT_DB
 import mysql.connector
 
 

@@ -1,7 +1,6 @@
 import json
 import pandas as pd
 import aiohttp
-
 from load_env import LOL_API_KEY
 
 base_url = "https://euw1.api.riotgames.com"

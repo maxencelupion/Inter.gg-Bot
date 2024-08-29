@@ -3,12 +3,13 @@ import sys
 import discord
 import os
 import asyncio
-from database.db import *
-from game_tracker.lol import *
-from game_tracker.get_champ_dict import get_latest_ddragon, get_champion_by_key, get_champ_icon
+from ..database.db import *
+from ..game_tracker.lol import *
+from ..game_tracker.get_champ_dict import get_latest_ddragon, get_champion_by_key, get_champ_icon
 from discord.ext import commands, tasks
 from discord import app_commands
 from datetime import datetime
+from mwrogue.esports_client import EsportsClient
 
 dict_queue_id = {420: "solo", 440: "flex"}
 dict_queue = {"solo": 2, "flex": 0}
@@ -16,6 +17,7 @@ colors = {"blue": 0x50749b, "green": 0x1a994a, "red": 0xab0303, "yellow": 0xc49c
 tiers = {"I": 4, "II": 3, "III": 2, "IV": 1}
 divisions = {"Unranked": 0, "IRON": 1, "BRONZE": 2, "SILVER": 3, "GOLD": 4, "PLATINUM": 5, "EMERALD": 6, "DIAMOND": 7, "MASTER": 8, "GRANDMASTER": 9, "CHALLENGER": 10}
 champ_dict = {}
+site = EsportsClient('lol')
 COGS = []
 for file in os.listdir("cogs"):
 	if file.endswith(".py"):
