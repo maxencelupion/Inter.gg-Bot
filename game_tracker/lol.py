@@ -1,8 +1,6 @@
 import json
 import pandas as pd
 import aiohttp
-import requests
-import sys
 
 from load_env import LOL_API_KEY
 
@@ -84,10 +82,9 @@ async def is_in_game(account):
 	"""
 	method_spectator = '/lol/spectator/v5/active-games/by-summoner/'
 	url_spectator = base_url + method_spectator + account.id + api_key
-	try:
-		return requests.get(url_spectator)
-	except Exception as e:
-		print(e)
+	async with aiohttp.ClientSession() as session:
+		async with session.get(url_spectator) as response:
+			return response
 
 
 async def get_last_game(account):
@@ -98,14 +95,13 @@ async def get_last_game(account):
 	"""
 	method_match = f"/lol/match/v5/matches/by-puuid/{account.id}/ids" + "?start=0&count=1" + "&api_key=" + LOL_API_KEY
 	url_match = second_base_url + method_match
-	response = requests.get(url_match)
-	api_response_text = response.text
-	id_last_game = json.loads(api_response_text)[0]
-	url_data_match = second_base_url + "/lol/match/v5/matches/" + id_last_game + api_key
-	try:
-		return requests.get(url_data_match)
-	except Exception as e:
-		print(e)
+	async with aiohttp.ClientSession() as session:
+		async with session.get(url_match) as response:
+			api_response_text = response.text
+			id_last_game = json.loads(api_response_text)[0]
+			url_data_match = second_base_url + "/lol/match/v5/matches/" + id_last_game + api_key
+		async with session.get(url_data_match) as response:
+			return response
 
 
 async def test_lol_by_puuid(puuid):

@@ -2,7 +2,7 @@ import asyncio
 import os
 import discord
 from discord.ext import commands
-from load_env import TOKEN
+from game_tracker.load_env import TOKEN
 
 
 class MyBot(commands.Bot):

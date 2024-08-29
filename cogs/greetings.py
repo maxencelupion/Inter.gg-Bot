@@ -4,8 +4,8 @@ import discord
 import os
 import asyncio
 from database.db import *
-from lol import *
-from get_champ_dict import get_latest_ddragon, get_champion_by_key, get_champ_icon
+from game_tracker.lol import *
+from game_tracker.get_champ_dict import get_latest_ddragon, get_champion_by_key, get_champ_icon
 from discord.ext import commands, tasks
 from discord import app_commands
 from datetime import datetime
