@@ -1,5 +1,11 @@
+# Py cache
 __pycache__
+
+# Env file
 .env
-venv/
-venv_lol/
+
+# IDE
 .idea
+
+# Database
+data.db

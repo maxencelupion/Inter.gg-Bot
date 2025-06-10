@@ -6,21 +6,6 @@ services:
     restart: unless-stopped
     container_name: intergg_bot
     environment:
-      INTER_DB: "inter_db"
-    depends_on:
-      - inter_db
-
-  inter_db:
-    image: mysql:latest
-    restart: always
-    container_name: intergg_bot_db
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: discord_lol
+      INTER_DB: "/data/intergg.sqlite"
     volumes:
-      - db_data:/var/lib/mysql
-      - ./init_scripts/init.sql:/docker-entrypoint-initdb.d/1-init.sql
-    ports:
-      - "3306:3306"
-volumes:
-  db_data:
+      - ./data:/data
