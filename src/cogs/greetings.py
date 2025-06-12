@@ -35,7 +35,7 @@ class Greetings(commands.Cog):
         await interaction.response.send_message("Pong!", ephemeral=True)
 
     @app_commands.command(name="init_bot", description="Link the Inter.gg Bot to a channel.")
-    @discord.app_commands.describe(channel="Discord channel to linkthe bot")
+    @discord.app_commands.describe(channel="Discord channel to link the bot")
     async def link_bot_to_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         """
         Link the bot to the given channel to use for the server interaction. Add it to the DB.
