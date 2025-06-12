@@ -1,5 +1,6 @@
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, DateTime
+import datetime
 
 class Base(DeclarativeBase):
     pass
@@ -9,6 +10,8 @@ class Server(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     server_id: Mapped[int] = mapped_column(unique=True)
     channel_id: Mapped[int]
+    created_at = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     accounts: Mapped[list["Account"]] = relationship(back_populates="server", cascade="all, delete-orphan")
 
@@ -27,5 +30,7 @@ class Account(Base):
     division_flex: Mapped[str] = mapped_column(default='Unranked', nullable=False)
     tier_flex: Mapped[str] = mapped_column(default='IV', nullable=False)
     league_points_flex: Mapped[int] = mapped_column(default=0, nullable=False)
+    created_at = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow) # Used to track inactive accounts
 
-    server: Mapped["Server"] = relationship(back_populates="accounts")
+server: Mapped["Server"] = relationship(back_populates="accounts")
