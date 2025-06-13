@@ -17,8 +17,7 @@ services:
   migrate:
     build:
       context: .
-      dockerfile: Dockerfile
-    command: alembic upgrade head
+      dockerfile: migrate.Dockerfile
     volumes:
       - ./data:/data
       - ./alembic:/app/alembic
