@@ -1,3 +1,5 @@
+version: '3.9'
+
 services:
   intergg_bot:
     build:
@@ -9,3 +11,19 @@ services:
       INTER_DB: "/data/intergg.sqlite"
     volumes:
       - ./data:/data
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
+    depends_on:
+      - migrate
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: alembic upgrade head
+    volumes:
+      - ./data:/data
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
+    environment:
+      INTER_DB: "/data/intergg.sqlite"
