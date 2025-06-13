@@ -2,6 +2,7 @@ import os
 import discord
 import datetime
 from src.lol import *
+from src.utils.utils import *
 from discord.ext import commands, tasks
 from discord import app_commands
 from src.database.database import Database
@@ -110,7 +111,7 @@ class Greetings(commands.Cog):
             existing_server = self.session.query(Server).filter_by(server_id=interaction.guild_id).first()
 
             if not existing_server:
-                print(f"Error adding account {pseudo}#{tag}, no channel linked.")
+                print(f"Error adding account {format_riot_account(pseudo, tag)}, no channel linked.")
                 await interaction.followup.send(
                     content="To start tracking account, you first need to link the bot to a channel.",
                 )
@@ -119,7 +120,7 @@ class Greetings(commands.Cog):
             count = self.session.query(Account).count()
 
             if count >= 200:
-                print(f"Error adding account {pseudo}#{tag}, max accounts amount reached.")
+                print(f"Error adding account {format_riot_account(pseudo, tag)}, max accounts amount reached.")
                 await interaction.followup.send(
                     content=f"{AUTHOR['name']} is already tracking 200 accounts. Please contact the developer to track more.",
                 )
@@ -131,7 +132,7 @@ class Greetings(commands.Cog):
 
             if existing_account:
                 await interaction.followup.send(
-                    f"Account {pseudo}#{tag} is already tracked.",
+                    f"Account {format_riot_account(pseudo, tag)} is already tracked.",
                 )
                 return
 
@@ -140,26 +141,23 @@ class Greetings(commands.Cog):
             if not puuid:
                 print('account invalid')
                 await interaction.followup.send(
-                    f"Account {pseudo}#{tag} does not exist or is invalid.",
+                    f"Account {format_riot_account(pseudo, tag)} does not exist or is invalid.",
                 )
                 return
 
             solo_tier, solo_rank, solo_league_points = await get_tier(puuid), await get_rank(puuid), await get_league_points(puuid)
 
             if not all([solo_tier, solo_rank, solo_league_points]):
-                print(f"Error retrieving solo ranked data for account {pseudo}#{tag}.")
                 await interaction.followup.send(
-                    f"Error retrieving solo ranked data for account {pseudo}#{tag}.",
+                    f"Error retrieving solo ranked data for account {format_riot_account(pseudo, tag)}.",
                 )
                 return
 
             flex_tier, flex_rank, flex_league_points = await get_tier(puuid, True), await get_rank(puuid, True), await get_league_points(puuid, True)
 
             if not all([flex_tier, flex_rank, flex_league_points]):
-                print(flex_tier, flex_rank, flex_league_points)
-                print(f"Error retrieving flex ranked data for account {pseudo}#{tag}.")
                 await interaction.followup.send(
-                    f"Error retrieving flex ranked data for account {pseudo}#{tag}.",
+                    f"Error retrieving flex ranked data for account {format_riot_account(pseudo, tag)}.",
                 )
                 return
 
@@ -181,12 +179,12 @@ class Greetings(commands.Cog):
             self.session.commit()
 
             await interaction.followup.send(
-                f"Account {pseudo}#{tag} successfully added.",
+                f"Account {format_riot_account(pseudo, tag)} successfully added.",
             )
 
         except Exception as e:
             await interaction.followup.send(
-                f"Error adding account {pseudo}#{tag}.",
+                f"Error adding account {format_riot_account(pseudo, tag)}.",
             )
             print(f"Exception: {e}")
 
