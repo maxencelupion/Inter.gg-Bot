@@ -74,7 +74,6 @@ class Greetings(commands.Cog):
                 print(f"Error linking {AUTHOR['name']} to {channel.mention} channel, max server amount reached.")
                 await interaction.followup.send(
                     content=f"{AUTHOR['name']} is already linked to 200 servers. Please contact the developer to link more.",
-                    ephemeral=True
                 )
                 return
 
@@ -89,7 +88,6 @@ class Greetings(commands.Cog):
 
             await interaction.followup.send(
                 content=f"{AUTHOR['name']} will now use the {channel.mention} channel.",
-                ephemeral=True
             )
         except Exception as e:
             print(f"Error linking {AUTHOR['name']} to {channel.mention} channel, {e}.")
@@ -105,7 +103,7 @@ class Greetings(commands.Cog):
         :param tag:
         :return:
         """
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
         tag = tag.replace("#", "").upper()
 
         try:
@@ -115,7 +113,6 @@ class Greetings(commands.Cog):
                 print(f"Error adding account {pseudo}#{tag}, no channel linked.")
                 await interaction.followup.send(
                     content="To start tracking account, you first need to link the bot to a channel.",
-                    ephemeral=True
                 )
                 return
 
@@ -125,7 +122,6 @@ class Greetings(commands.Cog):
                 print(f"Error adding account {pseudo}#{tag}, max accounts amount reached.")
                 await interaction.followup.send(
                     content=f"{AUTHOR['name']} is already tracking 200 accounts. Please contact the developer to track more.",
-                    ephemeral=True
                 )
                 return
 
@@ -136,40 +132,61 @@ class Greetings(commands.Cog):
             if existing_account:
                 await interaction.followup.send(
                     f"Account {pseudo}#{tag} is already tracked.",
-                    ephemeral=True
                 )
                 return
 
-            encrypted_id = await store_ids(pseudo, tag)
+            puuid = await get_puuid(pseudo, tag)
 
-            if not encrypted_id:
+            if not puuid:
                 print('account invalid')
                 await interaction.followup.send(
                     f"Account {pseudo}#{tag} does not exist or is invalid.",
-                    ephemeral=True
+                )
+                return
+
+            solo_tier, solo_rank, solo_league_points = await get_tier(puuid), await get_rank(puuid), await get_league_points(puuid)
+
+            if not all([solo_tier, solo_rank, solo_league_points]):
+                print(f"Error retrieving solo ranked data for account {pseudo}#{tag}.")
+                await interaction.followup.send(
+                    f"Error retrieving solo ranked data for account {pseudo}#{tag}.",
+                )
+                return
+
+            flex_tier, flex_rank, flex_league_points = await get_tier(puuid, True), await get_rank(puuid, True), await get_league_points(puuid, True)
+
+            if not all([flex_tier, flex_rank, flex_league_points]):
+                print(flex_tier, flex_rank, flex_league_points)
+                print(f"Error retrieving flex ranked data for account {pseudo}#{tag}.")
+                await interaction.followup.send(
+                    f"Error retrieving flex ranked data for account {pseudo}#{tag}.",
                 )
                 return
 
             new_account = Account(
                 riot_username=pseudo,
                 user_tag=tag,
-                encrypted_id=encrypted_id,
+                encrypted_id=puuid,
                 discord_user=str(interaction.user.id),
+                solo_tier=solo_tier,
+                solo_rank=solo_rank,
+                solo_league_points=solo_league_points,
+                flex_tier=flex_tier,
+                flex_rank=flex_rank,
+                flex_league_points=flex_league_points,
                 server=existing_server
             )
-            print('new account created')
+
             self.session.add(new_account)
             self.session.commit()
 
             await interaction.followup.send(
                 f"Account {pseudo}#{tag} successfully added.",
-                ephemeral=True
             )
 
         except Exception as e:
             await interaction.followup.send(
                 f"Error adding account {pseudo}#{tag}.",
-                ephemeral=True
             )
             print(f"Exception: {e}")
 
@@ -178,7 +195,7 @@ class Greetings(commands.Cog):
         """
         This task is called every 60 seconds.
         Check every user if they're currently in game or not, and compare it to their previous state.
-        Send a message in the channel of the server if it game just started or if he just finished
+        Send a message in the channel of the server if it games just started or if he just finished
         a game. The message contains some information about the game -> queue, champion, Porofessor game url.
         """
         global champ_dict
