@@ -1,15 +1,18 @@
 import os
 import discord
+import datetime
 from src.lol import *
 from discord.ext import commands, tasks
 from discord import app_commands
 from src.database.database import Database
 from src.models.models import Server, Account
 
+AUTHOR = {"name": "Inter.gg Bot", "url": "https://github.com/maxencelupion/Inter.gg-Bot"}
+COLORS = {"blue": 0x50749b, "green": 0x1a994a, "red": 0xab0303, "yellow": 0xc49c2d}
 COGS = []
-cogs_dir = os.path.join(os.path.dirname(__file__), "..", "cogs")
-cogs_dir = os.path.abspath(cogs_dir)
-for file in os.listdir(cogs_dir):
+COGS_DIR = os.path.join(os.path.dirname(__file__), "..", "cogs")
+COGS_DIR = os.path.abspath(COGS_DIR)
+for file in os.listdir(COGS_DIR):
     if file.endswith(".py"):
         COGS.append(file[:-3])
 
@@ -30,10 +33,29 @@ class Greetings(commands.Cog):
         except Exception as e:
             print(e)
 
-    @app_commands.command(name="ping", description="Pong !")
-    @app_commands.checks.has_permissions(administrator=True)
-    async def ping(self, interaction: discord.Interaction) -> None:
-        await interaction.response.send_message("Pong!", ephemeral=True)
+    @app_commands.command(name="get_started", description="Get started guide to start using the Inter.gg Bot !")
+    async def get_started(self, interaction: discord.Interaction):
+        """
+        Display the get started message.
+        :param interaction: Discord interaction
+        """
+        await interaction.response.defer()
+        embed = discord.Embed(
+            title="**Get Started !** ",
+            description="To start using the bot, you first need to link a channel to be used with the command /init_bot:"
+                        "```/link_bot {channel}```"
+                        "**Note that you can change the selected channel at any time by using the /link_bot command again**\n\n"
+                        "You can then add a Riot account to track ! **Note: these accounts must be from the EUW region.**\n"
+                        "```/add_account {Riot account name}{Riot account tag}```\n"
+                        "You can also delete these accounts in the same way.\n"
+                        "```/delete_account {Riot account name}{Riot account tag}```\n"
+                        "_Made by https://github.com/maxencelupion_",
+            colour=COLORS["yellow"],
+            timestamp=datetime.datetime.now()
+        )
+        embed.set_author(name=AUTHOR['name'], url=AUTHOR['url'])
+        embed.set_footer(text="Get Started Guide")
+        await interaction.followup.send(embed=embed)
 
     @app_commands.command(name="link_bot", description="Link the Inter.gg Bot to a channel.")
     @discord.app_commands.describe(channel="Discord channel to link the bot")
