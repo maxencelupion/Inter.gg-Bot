@@ -33,7 +33,7 @@ class Greetings(commands.Cog):
         except Exception as e:
             print(e)
 
-    @app_commands.command(name="get_started", description="Get started guide to start using the Inter.gg Bot !")
+    @app_commands.command(name="get_started", description=f"Get started guide to start using the {AUTHOR['name']} !")
     async def get_started(self, interaction: discord.Interaction):
         """
         Display the get started message.
@@ -57,7 +57,7 @@ class Greetings(commands.Cog):
         embed.set_footer(text="Get Started Guide")
         await interaction.followup.send(embed=embed)
 
-    @app_commands.command(name="link_bot", description="Link the Inter.gg Bot to a channel.")
+    @app_commands.command(name="link_bot", description=f"Link the {AUTHOR['name']} to a channel.")
     @discord.app_commands.describe(channel="Discord channel to link the bot")
     async def link_bot_to_channel(self, interaction: discord.Interaction, channel: discord.TextChannel):
         """
@@ -71,9 +71,9 @@ class Greetings(commands.Cog):
             count = self.session.query(Server).count()
 
             if (count >= 200):
-                print(f"Error linking Inter.gg Bot to {channel.mention} channel, max server amount reached.")
+                print(f"Error linking {AUTHOR['name']} to {channel.mention} channel, max server amount reached.")
                 await interaction.followup.send(
-                    content="The bot is already linked to 200 servers. Please contact the developer to link more.",
+                    content=f"{AUTHOR['name']} is already linked to 200 servers. Please contact the developer to link more.",
                     ephemeral=True
                 )
                 return
@@ -88,12 +88,12 @@ class Greetings(commands.Cog):
             self.session.commit()
 
             await interaction.followup.send(
-                content=f"Inter.gg Bot will now use the {channel.mention} channel.",
+                content=f"{AUTHOR['name']} will now use the {channel.mention} channel.",
                 ephemeral=True
             )
         except Exception as e:
-            print(f"Error linking Inter.gg Bot to {channel.mention} channel, {e}.")
-            await interaction.followup.send(f"Error linking Inter.gg Bot to {channel.mention} channel.")
+            print(f"Error linking {AUTHOR['name']} to {channel.mention} channel, {e}.")
+            await interaction.followup.send(f"Error linking {AUTHOR['name']} to {channel.mention} channel.")
 
     @app_commands.command(name="add_account", description="Add an EUW Riot account to the bot !")
     @discord.app_commands.describe(pseudo="Pseudo of the Riot account to add", tag="Tag of the Riot account to add")
@@ -124,7 +124,7 @@ class Greetings(commands.Cog):
             if count >= 200:
                 print(f"Error adding account {pseudo}#{tag}, max accounts amount reached.")
                 await interaction.followup.send(
-                    content="The bot is already tracking 200 accounts. Please contact the developer to track more.",
+                    content=f"{AUTHOR['name']} is already tracking 200 accounts. Please contact the developer to track more.",
                     ephemeral=True
                 )
                 return
