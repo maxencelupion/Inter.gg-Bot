@@ -43,7 +43,7 @@ class Greetings(commands.Cog):
         await interaction.response.defer()
         embed = discord.Embed(
             title="**Get Started !** ",
-            description="To start using the bot, you first need to link a channel to be used with the command /init_bot:"
+            description="To start using the bot, you first need to link a channel to be used with the command /link_bot:"
                         "```/link_bot {channel}```"
                         "**Note that you can change the selected channel at any time by using the /link_bot command again**\n\n"
                         "You can then add a Riot account to track ! **Note: these accounts must be from the EUW region.**\n"
@@ -78,11 +78,11 @@ class Greetings(commands.Cog):
                 )
                 return
 
-            existing_server = self.session.query(Server).filter_by(server_id=interaction.guild_id).first()
+            existing_server = self.session.query(Server).filter_by(guild_id=interaction.guild_id).first()
             if existing_server:
                 existing_server.channel_id = channel.id
             else:
-                new_server = Server(server_id=interaction.guild_id, channel_id=channel.id)
+                new_server = Server(guild_id=interaction.guild_id, channel_id=channel.id)
                 self.session.add(new_server)
 
             self.session.commit()
@@ -108,19 +108,19 @@ class Greetings(commands.Cog):
         tag = tag.replace("#", "").upper()
 
         try:
-            existing_server = self.session.query(Server).filter_by(server_id=interaction.guild_id).first()
+            existing_server = self.session.query(Server).filter_by(guild_id=interaction.guild_id).first()
 
             if not existing_server:
-                print(f"Error adding account {format_riot_account(pseudo, tag)}, no channel linked.")
+                print(f"Error adding account {format_riot_account_error(pseudo, tag)}, no channel linked.")
                 await interaction.followup.send(
-                    content="To start tracking account, you first need to link the bot to a channel.",
+                    content="To start tracking account, you first need to link the bot to a channel. /get_started for some help !",
                 )
                 return
 
             count = self.session.query(Account).count()
 
             if count >= 200:
-                print(f"Error adding account {format_riot_account(pseudo, tag)}, max accounts amount reached.")
+                print(f"Error adding account {format_riot_account_error(pseudo, tag)}, max accounts amount reached.")
                 await interaction.followup.send(
                     content=f"{AUTHOR['name']} is already tracking 200 accounts. Please contact the developer to track more.",
                 )
@@ -130,18 +130,18 @@ class Greetings(commands.Cog):
                 (Account.riot_username == pseudo) & (Account.user_tag == tag)
             ).first()
 
-            if existing_account:
+            if existing_account and existing_server in existing_account.servers:
                 await interaction.followup.send(
-                    f"Account {format_riot_account(pseudo, tag)} is already tracked.",
+                    f"Account {format_riot_account_markdown(pseudo, tag)} is already tracked.",
                 )
                 return
 
             puuid = await get_puuid(pseudo, tag)
 
             if not puuid:
-                print('account invalid')
+                print(f"Error adding account {format_riot_account_error(pseudo, tag)}, account not found.")
                 await interaction.followup.send(
-                    f"Account {format_riot_account(pseudo, tag)} does not exist or is invalid.",
+                    f"Account {format_riot_account_markdown(pseudo, tag)} does not exist or is invalid.",
                 )
                 return
 
@@ -149,7 +149,7 @@ class Greetings(commands.Cog):
 
             if not all([solo_tier, solo_rank, solo_league_points]):
                 await interaction.followup.send(
-                    f"Error retrieving solo ranked data for account {format_riot_account(pseudo, tag)}.",
+                    f"Error retrieving solo ranked data for account {format_riot_account_markdown(pseudo, tag)}.",
                 )
                 return
 
@@ -157,34 +157,37 @@ class Greetings(commands.Cog):
 
             if not all([flex_tier, flex_rank, flex_league_points]):
                 await interaction.followup.send(
-                    f"Error retrieving flex ranked data for account {format_riot_account(pseudo, tag)}.",
+                    f"Error retrieving flex ranked data for account {format_riot_account_markdown(pseudo, tag)}.",
                 )
                 return
 
-            new_account = Account(
-                riot_username=pseudo,
-                user_tag=tag,
-                encrypted_id=puuid,
-                discord_user=str(interaction.user.id),
-                solo_tier=solo_tier,
-                solo_rank=solo_rank,
-                solo_league_points=solo_league_points,
-                flex_tier=flex_tier,
-                flex_rank=flex_rank,
-                flex_league_points=flex_league_points,
-                server=existing_server
-            )
+            if existing_account:
+                existing_account.servers.append(existing_server)
+            else:
+                new_account = Account(
+                    riot_username=pseudo,
+                    user_tag=tag,
+                    encrypted_id=puuid,
+                    discord_user=str(interaction.user.id),
+                    solo_tier=solo_tier,
+                    solo_rank=solo_rank,
+                    solo_league_points=solo_league_points,
+                    flex_tier=flex_tier,
+                    flex_rank=flex_rank,
+                    flex_league_points=flex_league_points,
+                    servers=[existing_server]
+                )
+                self.session.add(new_account)
 
-            self.session.add(new_account)
             self.session.commit()
 
             await interaction.followup.send(
-                f"Account {format_riot_account(pseudo, tag)} successfully added.",
+                f"Account {format_riot_account_markdown(pseudo, tag)} successfully added.",
             )
 
         except Exception as e:
             await interaction.followup.send(
-                f"Error adding account {format_riot_account(pseudo, tag)}.",
+                f"Error adding account {format_riot_account_markdown(pseudo, tag)}.",
             )
             print(f"Exception: {e}")
 
